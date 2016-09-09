@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 )
@@ -9,16 +10,61 @@ import (
 
 type handler func(w http.ResponseWriter, r *http.Request)
 
-//////////////////
-
-// Should be POST
-func StoreHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "store: %s, method: %s", r.URL.Path[1:], r.Method)
+type StoreRequest struct {
+	ID   int    `json:"id"`
+	Data string `json:"data"`
 }
 
-// Should be GET
+type StoreResponse struct {
+	Key string `json:"key"`
+}
+
+type RetrieveResponse struct {
+	Data string `json:"data"`
+}
+
+//////////////////
+
+// Must be POST
+func StoreHandler(w http.ResponseWriter, r *http.Request) {
+
+	decoder := json.NewDecoder(r.Body)
+
+	var parsed StoreRequest
+	error := decoder.Decode(&parsed)
+	if error != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	fmt.Fprintf(w, "store: %s, method: %s", r.URL.Path[1:], r.Method)
+	fmt.Fprintf(w, "	ID: %d, Data: %s", parsed.ID, parsed.Data)
+}
+
+// Must be GET
 func RetrieveHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "retrieve: %s, method: %s", r.URL.Path[1:], r.Method)
+
+	url := r.URL
+	query := url.Query()
+
+	key := query.Get("key")
+	key_problem := len(key) == 0
+	if key_problem {
+		http.Error(w, "Missing key", http.StatusBadRequest)
+	}
+
+	id := query.Get("id")
+	id_problem := len(id) == 0
+	if id_problem {
+		http.Error(w, "Missing ID", http.StatusBadRequest)
+	}
+
+	if key_problem || id_problem {
+		return
+	}
+
+	fmt.Fprintf(w, "retrieve: %s, method: %s", url.Path[1:], r.Method)
+	fmt.Fprintf(w, "	ID: %s, Key: %s", id, key)
 }
 
 //////////////////
