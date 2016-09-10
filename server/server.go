@@ -31,8 +31,8 @@ func StoreHandler(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 
 	var parsed StoreRequest
-	error := decoder.Decode(&parsed)
-	if error != nil {
+	problem := decoder.Decode(&parsed)
+	if problem != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
