@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"encoding/json"
@@ -91,7 +91,7 @@ func GetOnly(h handler) handler {
 
 //////////////////
 
-func main() {
+func Start() {
 	http.HandleFunc("/store", PostOnly(StoreHandler))
 	http.HandleFunc("/retrieve", GetOnly(RetrieveHandler))
 	http.ListenAndServe(":8080", nil)
