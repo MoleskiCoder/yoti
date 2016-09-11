@@ -47,7 +47,7 @@ func StoreHandler(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 
 	var parsed StoreRequest
-	_ := decoder.Decode(&parsed)
+	_ = decoder.Decode(&parsed)
 
 	payload := Store(parsed)
 
