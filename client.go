@@ -7,11 +7,9 @@ import (
 	"github.com/MoleskiCoder/yoti/client"
 )
 
-func Store(id uint64, payload string) string {
+func Store(connection client.HttpClient, id uint64, payload string) string {
 
-	var crypt client.HttpClient
-
-	key, problem := crypt.Store([]byte(strconv.FormatUint(id, 10)), []byte(payload))
+	key, problem := connection.Store([]byte(strconv.FormatUint(id, 10)), []byte(payload))
 
 	if problem != nil {
 		panic("Store error")
@@ -20,11 +18,9 @@ func Store(id uint64, payload string) string {
 	return string(key)
 }
 
-func Retrieve(id uint64, key string) string {
+func Retrieve(connection client.HttpClient, id uint64, key string) string {
 
-	var crypt client.HttpClient
-
-	payload, problem := crypt.Retrieve([]byte(strconv.FormatUint(id, 10)), []byte(key))
+	payload, problem := connection.Retrieve([]byte(strconv.FormatUint(id, 10)), []byte(key))
 
 	if problem != nil {
 		panic("Retrieve error")
@@ -36,12 +32,14 @@ func Retrieve(id uint64, key string) string {
 
 func main() {
 
+	var connection = client.New("http", "localhost", 8080)
+
 	var id uint64 = 1
 	original := "The quick brown fox jumps over the lazy dog"
 
-	key := Store(id, original)
+	key := Store(connection, id, original)
 	fmt.Printf("Stored key: %s\n", key)
 
-	retrieved := Retrieve(id, key)
+	retrieved := Retrieve(connection, id, key)
 	fmt.Printf("Retrieved text: %s\n", retrieved)
 }

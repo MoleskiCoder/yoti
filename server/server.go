@@ -25,20 +25,34 @@ type RetrieveResponse struct {
 
 //////////////////
 
+func Store(request StoreRequest) *StoreResponse {
+	response := &StoreResponse{
+		Key: "A cool key",
+	}
+	return response
+}
+
+func Retrieve(key string, id uint64) *RetrieveResponse {
+	response := &RetrieveResponse{
+		Data: "A cool response",
+	}
+	return response
+}
+
+//////////////////
+
 // Must be POST
 func StoreHandler(w http.ResponseWriter, r *http.Request) {
 
 	decoder := json.NewDecoder(r.Body)
 
 	var parsed StoreRequest
-	problem := decoder.Decode(&parsed)
-	if problem != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
-		return
-	}
+	_ := decoder.Decode(&parsed)
 
-	fmt.Fprintf(w, "store: %s, method: %s", r.URL.Path[1:], r.Method)
-	fmt.Fprintf(w, "	ID: %d, Data: %s", parsed.Id, parsed.Data)
+	payload := Store(parsed)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(payload)
 }
 
 // Must be GET
