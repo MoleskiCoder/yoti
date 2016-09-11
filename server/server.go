@@ -10,6 +10,15 @@ import (
 
 type handler func(w http.ResponseWriter, r *http.Request)
 
+//////////////////
+
+type Repository struct {
+	encrypted map[uint64][]byte
+	iv        map[uint64][]byte
+}
+
+//////////////////
+
 type StoreRequest struct {
 	Id   uint64 `json:"id"`
 	Data string `json:"data"`
@@ -25,16 +34,37 @@ type RetrieveResponse struct {
 
 //////////////////
 
-func Store(request StoreRequest) *StoreResponse {
+func (repo Repository) Store(request StoreRequest) *StoreResponse {
+
+	key := "A cool key"
+
+	id := request.Id
+	data := request.Data
+
+	iv := GenerateIV()
+	aesCrypt := NewAes(key, iv)
+
+	encrypted := aesCrypt.Encrypt([]byte(data))
+	repo.encrypted[id] = encrypted
+	repo.iv[id] = iv
+
 	response := &StoreResponse{
-		Key: "A cool key",
+		Key: key,
 	}
+
 	return response
 }
 
-func Retrieve(key string, id uint64) *RetrieveResponse {
+func (repo Repository) Retrieve(key string, id uint64) *RetrieveResponse {
+
+	encrypted := repo.encrypted[id]
+	iv := repo.iv[id]
+
+	aesCrypt := NewAes(key, iv)
+	decrypted := aesCrypt.Decrypt(encrypted)
+
 	response := &RetrieveResponse{
-		Data: "A cool response",
+		Data: string(decrypted),
 	}
 	return response
 }
@@ -49,7 +79,7 @@ func StoreHandler(w http.ResponseWriter, r *http.Request) {
 	var parsed StoreRequest
 	_ = decoder.Decode(&parsed)
 
-	payload := Store(parsed)
+	payload := repository.Store(parsed)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(payload)
@@ -104,6 +134,8 @@ func GetOnly(h handler) handler {
 }
 
 //////////////////
+
+var repository *Repository
 
 func Start() {
 	http.HandleFunc("/store", PostOnly(StoreHandler))
