@@ -7,11 +7,11 @@ import (
 	"github.com/MoleskiCoder/yoti/client"
 )
 
-func Store(id int, payload string) string {
+func Store(id uint64, payload string) string {
 
-	var crypt client.Client
+	var crypt client.HttpClient
 
-	key, problem := crypt.Store([]byte(strconv.FormatInt(id, 10)), []byte(payload))
+	key, problem := crypt.Store([]byte(strconv.FormatUint(id, 10)), []byte(payload))
 
 	if problem != nil {
 		panic("Store error")
@@ -20,10 +20,11 @@ func Store(id int, payload string) string {
 	return string(key)
 }
 
-func Retrieve(id int, key string) string {
-	var crypt client.Client
+func Retrieve(id uint64, key string) string {
 
-	payload, problem := crypt.Retrieve([]byte(strconv.FormatInt(id, 10)), []byte(key))
+	var crypt client.HttpClient
+
+	payload, problem := crypt.Retrieve([]byte(strconv.FormatUint(id, 10)), []byte(key))
 
 	if problem != nil {
 		panic("Retrieve error")
@@ -35,7 +36,7 @@ func Retrieve(id int, key string) string {
 
 func main() {
 
-	id := 1
+	var id uint64 = 1
 	original := "The quick brown fox jumps over the lazy dog"
 
 	key := Store(id, original)

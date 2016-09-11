@@ -11,7 +11,7 @@ import (
 type handler func(w http.ResponseWriter, r *http.Request)
 
 type StoreRequest struct {
-	ID   int    `json:"id"`
+	Id   uint64 `json:"id"`
 	Data string `json:"data"`
 }
 
@@ -38,7 +38,7 @@ func StoreHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "store: %s, method: %s", r.URL.Path[1:], r.Method)
-	fmt.Fprintf(w, "	ID: %d, Data: %s", parsed.ID, parsed.Data)
+	fmt.Fprintf(w, "	ID: %d, Data: %s", parsed.Id, parsed.Data)
 }
 
 // Must be GET
