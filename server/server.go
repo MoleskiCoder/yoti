@@ -34,7 +34,7 @@ type RetrieveResponse struct {
 
 //////////////////
 
-func (repo Repository) Store(request StoreRequest) *StoreResponse {
+func (repo Repository) store(request StoreRequest) *StoreResponse {
 
 	key := "A cool key"
 
@@ -55,7 +55,7 @@ func (repo Repository) Store(request StoreRequest) *StoreResponse {
 	return response
 }
 
-func (repo Repository) Retrieve(key string, id uint64) *RetrieveResponse {
+func (repo Repository) retrieve(key string, id uint64) *RetrieveResponse {
 
 	encrypted := repo.encrypted[id]
 	iv := repo.iv[id]
@@ -72,21 +72,21 @@ func (repo Repository) Retrieve(key string, id uint64) *RetrieveResponse {
 //////////////////
 
 // Must be POST
-func StoreHandler(w http.ResponseWriter, r *http.Request) {
+func storeHandler(w http.ResponseWriter, r *http.Request) {
 
 	decoder := json.NewDecoder(r.Body)
 
 	var parsed StoreRequest
 	_ = decoder.Decode(&parsed)
 
-	payload := repository.Store(parsed)
+	payload := repository.store(parsed)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(payload)
 }
 
 // Must be GET
-func RetrieveHandler(w http.ResponseWriter, r *http.Request) {
+func retrieveHandler(w http.ResponseWriter, r *http.Request) {
 
 	url := r.URL
 	query := url.Query()
@@ -113,7 +113,7 @@ func RetrieveHandler(w http.ResponseWriter, r *http.Request) {
 
 //////////////////
 
-func PostOnly(h handler) handler {
+func postOnly(h handler) handler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "POST" {
 			h(w, r)
@@ -123,7 +123,7 @@ func PostOnly(h handler) handler {
 	}
 }
 
-func GetOnly(h handler) handler {
+func getOnly(h handler) handler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {
 			h(w, r)
@@ -138,7 +138,7 @@ func GetOnly(h handler) handler {
 var repository *Repository
 
 func Start() {
-	http.HandleFunc("/store", PostOnly(StoreHandler))
-	http.HandleFunc("/retrieve", GetOnly(RetrieveHandler))
+	http.HandleFunc("/store", postOnly(storeHandler))
+	http.HandleFunc("/retrieve", getOnly(retrieveHandler))
 	http.ListenAndServe(":8080", nil)
 }

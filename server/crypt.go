@@ -23,7 +23,7 @@ func NewAes(key string, iv []byte) *Aes {
 }
 
 func (current *Aes) Encrypt(data []byte) []byte {
-	input := current.Pad(data)
+	input := current.pad(data)
 	encoded := make([]byte, len(input))
 	encrypter := cipher.NewCBCEncrypter(current.block, current.iv)
 	encrypter.CryptBlocks(encoded, input)
@@ -34,10 +34,10 @@ func (current *Aes) Decrypt(data []byte) []byte {
 	decoded := make([]byte, len(data))
 	decrypter := cipher.NewCBCDecrypter(current.block, current.iv)
 	decrypter.CryptBlocks(decoded, data)
-	return current.Trim(decoded)
+	return current.trim(decoded)
 }
 
-func (current *Aes) Pad(data []byte) []byte {
+func (current *Aes) pad(data []byte) []byte {
 
 	dataLength := len(data)
 
@@ -56,7 +56,7 @@ func (current *Aes) Pad(data []byte) []byte {
 	return padded
 }
 
-func (current *Aes) Trim(data []byte) []byte {
+func (current *Aes) trim(data []byte) []byte {
 	// Retrieve the amount of padding first
 	padding := int(data[len(data)-1])
 	return data[0 : len(data)-padding]

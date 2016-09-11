@@ -26,7 +26,7 @@ func New(scheme string, hostname string, port int) HttpClient {
 	return connection
 }
 
-func (c HttpClient) CreateUrl(resource string) url.URL {
+func (c HttpClient) createUrl(resource string) url.URL {
 
 	var Url url.URL
 	Url.Scheme = c.scheme
@@ -39,7 +39,7 @@ func (c HttpClient) CreateUrl(resource string) url.URL {
 
 func (c HttpClient) Store(id, payload []byte) (aesKey []byte, err error) {
 
-	Url := c.CreateUrl("/store")
+	Url := c.createUrl("/store")
 	Id, _ := strconv.ParseUint(string(id), 10, 64)
 
 	request := &server.StoreRequest{
@@ -64,7 +64,7 @@ func (c HttpClient) Store(id, payload []byte) (aesKey []byte, err error) {
 
 func (c HttpClient) Retrieve(id, aesKey []byte) (payload []byte, err error) {
 
-	Url := c.CreateUrl("/retrieve")
+	Url := c.createUrl("/retrieve")
 	parameters := url.Values{}
 	parameters.Add("id", string(id))
 	parameters.Add("key", string(aesKey))
