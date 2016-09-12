@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"sync"
 )
 
 //////////////////
@@ -14,6 +15,7 @@ type handler func(w http.ResponseWriter, r *http.Request)
 //////////////////
 
 type Repository struct {
+	sync.RWMutex
 	encrypted map[uint64][]byte
 }
 
@@ -43,7 +45,10 @@ func (repo Repository) store(request StoreRequest) *StoreResponse {
 	aesCrypt, _ := NewAes(key)
 
 	encrypted := aesCrypt.Encrypt(data)
+
+	repo.Lock()
 	repo.encrypted[id] = encrypted
+	repo.Unlock()
 
 	response := &StoreResponse{
 		Key: hex.EncodeToString(key),
@@ -54,7 +59,9 @@ func (repo Repository) store(request StoreRequest) *StoreResponse {
 
 func (repo Repository) retrieve(key []byte, id uint64) *RetrieveResponse {
 
+	repo.RLock()
 	encrypted := repo.encrypted[id]
+	repo.RUnlock()
 
 	aesCrypt, _ := NewAes(key)
 	decrypted := aesCrypt.Decrypt(encrypted)
