@@ -14,7 +14,6 @@ type handler func(w http.ResponseWriter, r *http.Request)
 
 type Repository struct {
 	encrypted map[uint64][]byte
-	iv        map[uint64][]byte
 }
 
 //////////////////
@@ -39,14 +38,12 @@ func (repo Repository) store(request StoreRequest) *StoreResponse {
 	key := "AES256Key-32Characters1234567890"
 
 	id := request.Id
-	data := request.Data
+	data := []byte(request.Data)
 
-	iv := GenerateIV()
-	aesCrypt, _ := NewAes(key, iv)
+	aesCrypt, _ := NewAes(key)
 
-	encrypted := aesCrypt.Encrypt([]byte(data))
+	encrypted := aesCrypt.Encrypt(data)
 	repo.encrypted[id] = encrypted
-	repo.iv[id] = iv
 
 	response := &StoreResponse{
 		Key: key,
@@ -58,9 +55,8 @@ func (repo Repository) store(request StoreRequest) *StoreResponse {
 func (repo Repository) retrieve(key string, id uint64) *RetrieveResponse {
 
 	encrypted := repo.encrypted[id]
-	iv := repo.iv[id]
 
-	aesCrypt, _ := NewAes(key, iv)
+	aesCrypt, _ := NewAes(key)
 	decrypted := aesCrypt.Decrypt(encrypted)
 
 	response := &RetrieveResponse{
@@ -148,7 +144,6 @@ func Start() {
 
 	repository = &Repository{
 		encrypted: map[uint64][]byte{},
-		iv:        map[uint64][]byte{},
 	}
 
 	http.HandleFunc("/store", postOnly(storeHandler))

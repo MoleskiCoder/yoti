@@ -9,14 +9,12 @@ import (
 
 type Aes struct {
 	key   string
-	iv    []byte
 	block cipher.Block
 }
 
-func NewAes(key string, iv []byte) (*Aes, error) {
+func NewAes(key string) (*Aes, error) {
 	constructed := &Aes{
 		key: key,
-		iv:  iv,
 	}
 
 	aesCipher, err := aes.NewCipher([]byte(constructed.key))
@@ -28,19 +26,37 @@ func NewAes(key string, iv []byte) (*Aes, error) {
 	return constructed, nil
 }
 
-func (current *Aes) Encrypt(data []byte) []byte {
-	input := current.pad(data)
-	encoded := make([]byte, len(input))
-	encrypter := cipher.NewCBCEncrypter(current.block, current.iv)
+func (current *Aes) Encrypt(plain []byte) []byte {
+
+	// Data to be encrypted *must* be padded to aes.BlockSize
+	input := current.pad(plain)
+
+	// Plonk the IV at the beginning of the package
+	// i.e. packaged == iv + encoded
+	packaged := make([]byte, len(input)+aes.BlockSize)
+	iv := packaged[:aes.BlockSize]
+	readRandom(iv)
+	encoded := packaged[aes.BlockSize:]
+
+	encrypter := cipher.NewCBCEncrypter(current.block, iv)
 	encrypter.CryptBlocks(encoded, input)
-	return encoded
+
+	return packaged
 }
 
-func (current *Aes) Decrypt(data []byte) []byte {
-	decoded := make([]byte, len(data))
-	decrypter := cipher.NewCBCDecrypter(current.block, current.iv)
-	decrypter.CryptBlocks(decoded, data)
+func (current *Aes) Decrypt(packaged []byte) []byte {
+
+	iv := packaged[:aes.BlockSize]
+	encrypted := packaged[aes.BlockSize:]
+
+	decoded := make([]byte, len(encrypted))
+	decrypter := cipher.NewCBCDecrypter(current.block, iv)
+	decrypter.CryptBlocks(decoded, encrypted)
 	return current.trim(decoded)
+}
+
+func readRandom(iv []byte) (int, error) {
+	return io.ReadFull(rand.Reader, iv)
 }
 
 func (current *Aes) pad(data []byte) []byte {
@@ -66,11 +82,4 @@ func (current *Aes) trim(data []byte) []byte {
 	// Retrieve the amount of padding first
 	padding := int(data[len(data)-1])
 	return data[0 : len(data)-padding]
-}
-
-func GenerateIV() []byte {
-	// By reading "aes.Blocksize" bytes from crypt/rand
-	iv := make([]byte, aes.BlockSize)
-	_, _ = io.ReadFull(rand.Reader, iv)
-	return iv
 }
