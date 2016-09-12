@@ -8,6 +8,8 @@ import (
 	"bytes"
 	"net/http"
 
+	"encoding/hex"
+
 	"github.com/MoleskiCoder/yoti/server"
 )
 
@@ -58,7 +60,8 @@ func (c HttpClient) Store(id, payload []byte) ([]byte, error) {
 	var parsedResponse server.StoreResponse
 	_ = decoder.Decode(&parsedResponse)
 
-	return []byte(parsedResponse.Key), nil
+	key, _ := hex.DecodeString(parsedResponse.Key)
+	return key, nil
 }
 
 func (c HttpClient) Retrieve(id, aesKey []byte) ([]byte, error) {
@@ -66,7 +69,7 @@ func (c HttpClient) Retrieve(id, aesKey []byte) ([]byte, error) {
 	Url := c.createUrl("/retrieve")
 	parameters := url.Values{}
 	parameters.Add("id", string(id))
-	parameters.Add("key", string(aesKey))
+	parameters.Add("key", hex.EncodeToString(aesKey))
 	Url.RawQuery = parameters.Encode()
 
 	httpRequest, _ := http.NewRequest("GET", Url.String(), nil)
@@ -78,5 +81,6 @@ func (c HttpClient) Retrieve(id, aesKey []byte) ([]byte, error) {
 	var parsedResponse server.RetrieveResponse
 	_ = decoder.Decode(&parsedResponse)
 
-	return []byte(parsedResponse.Data), nil
+	decodedData, _ := hex.DecodeString(parsedResponse.Data)
+	return decodedData, nil
 }

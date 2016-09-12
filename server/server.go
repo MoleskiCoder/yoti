@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -35,24 +36,23 @@ type RetrieveResponse struct {
 
 func (repo Repository) store(request StoreRequest) *StoreResponse {
 
-	key := "AES256Key-32Characters1234567890"
-
 	id := request.Id
 	data := []byte(request.Data)
 
+	key, _ := GenerateKey()
 	aesCrypt, _ := NewAes(key)
 
 	encrypted := aesCrypt.Encrypt(data)
 	repo.encrypted[id] = encrypted
 
 	response := &StoreResponse{
-		Key: key,
+		Key: hex.EncodeToString(key),
 	}
 
 	return response
 }
 
-func (repo Repository) retrieve(key string, id uint64) *RetrieveResponse {
+func (repo Repository) retrieve(key []byte, id uint64) *RetrieveResponse {
 
 	encrypted := repo.encrypted[id]
 
@@ -60,7 +60,7 @@ func (repo Repository) retrieve(key string, id uint64) *RetrieveResponse {
 	decrypted := aesCrypt.Decrypt(encrypted)
 
 	response := &RetrieveResponse{
-		Data: string(decrypted),
+		Data: hex.EncodeToString(decrypted),
 	}
 	return response
 }
@@ -109,7 +109,13 @@ func retrieveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payload := repository.retrieve(key, parsedId)
+	decodedKey, err := hex.DecodeString(key)
+	if err != nil {
+		http.Error(w, "Invalid Key", http.StatusBadRequest)
+		return
+	}
+
+	payload := repository.retrieve(decodedKey, parsedId)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(payload)
 }

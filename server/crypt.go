@@ -8,16 +8,17 @@ import (
 )
 
 type Aes struct {
-	key   string
+	key   []byte
 	block cipher.Block
 }
 
-func NewAes(key string) (*Aes, error) {
+func NewAes(key []byte) (*Aes, error) {
+
 	constructed := &Aes{
 		key: key,
 	}
 
-	aesCipher, err := aes.NewCipher([]byte(constructed.key))
+	aesCipher, err := aes.NewCipher(constructed.key)
 	if err != nil {
 		return nil, err
 	}
@@ -55,8 +56,15 @@ func (current *Aes) Decrypt(packaged []byte) []byte {
 	return current.trim(decoded)
 }
 
-func readRandom(iv []byte) (int, error) {
-	return io.ReadFull(rand.Reader, iv)
+func GenerateKey() ([]byte, error) {
+	// 32 bytes == 256 bits, i.e. AES256
+	key := make([]byte, 32)
+	_, err := readRandom(key)
+	return key, err
+}
+
+func readRandom(destination []byte) (int, error) {
+	return io.ReadFull(rand.Reader, destination)
 }
 
 func (current *Aes) pad(data []byte) []byte {
