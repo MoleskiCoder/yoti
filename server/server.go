@@ -60,7 +60,7 @@ func (repo Repository) retrieve(key string, id uint64) *RetrieveResponse {
 	encrypted := repo.encrypted[id]
 	iv := repo.iv[id]
 
-	aesCrypt := NewAes(key, iv)
+	aesCrypt, _ := NewAes(key, iv)
 	decrypted := aesCrypt.Decrypt(encrypted)
 
 	response := &RetrieveResponse{
