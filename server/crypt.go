@@ -68,12 +68,12 @@ func (current *Aes) pad(data []byte) []byte {
 	length := aes.BlockSize * ((dataLength / aes.BlockSize) + 1)
 	padded := make([]byte, length)
 
-	copy(padded, data)
-
 	// Each padding byte is the amount of padded data used
 	for i := 0; i < length; i++ {
 		padded[i] = byte(padding)
 	}
+
+	copy(padded, data)
 
 	return padded
 }
