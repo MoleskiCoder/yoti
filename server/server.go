@@ -2,8 +2,8 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
+	"strconv"
 )
 
 //////////////////
@@ -107,8 +107,15 @@ func retrieveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "retrieve: %s, method: %s", url.Path[1:], r.Method)
-	fmt.Fprintf(w, "	ID: %s, Key: %s", id, key)
+	parsedId, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
+	}
+
+	payload := repository.retrieve(key, parsedId)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(payload)
 }
 
 //////////////////
