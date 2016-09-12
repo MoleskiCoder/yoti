@@ -41,26 +41,47 @@ func (c HttpClient) createUrl(resource string) url.URL {
 func (c HttpClient) Store(id, payload []byte) ([]byte, error) {
 
 	Url := c.createUrl("/store")
-	Id, _ := strconv.ParseUint(string(id), 10, 64)
+	Id, err := strconv.ParseUint(string(id), 10, 64)
+	if err != nil {
+		return nil, err
+	}
 
 	request := &server.StoreRequest{
 		Id:   Id,
 		Data: string(payload)}
-	jsonRequest, _ := json.Marshal(request)
+	jsonRequest, err := json.Marshal(request)
+	if err != nil {
+		panic("Unable to create store request JSON")
+	}
 
-	httpRequest, _ := http.NewRequest("POST", Url.String(), bytes.NewBuffer(jsonRequest))
+	httpRequest, err := http.NewRequest("POST", Url.String(), bytes.NewBuffer(jsonRequest))
+	if err != nil {
+		panic("Unable to create HTTP POST request for store")
+	}
+
 	httpRequest.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
-	response, _ := client.Do(httpRequest)
+	response, err := client.Do(httpRequest)
+	if err != nil {
+		return nil, err
+	}
+
 	defer response.Body.Close()
 
 	decoder := json.NewDecoder(response.Body)
 
 	var parsedResponse server.StoreResponse
-	_ = decoder.Decode(&parsedResponse)
+	err = decoder.Decode(&parsedResponse)
+	if err != nil {
+		return nil, err
+	}
 
-	key, _ := hex.DecodeString(parsedResponse.Key)
+	key, err := hex.DecodeString(parsedResponse.Key)
+	if err != nil {
+		return nil, err
+	}
+
 	return key, nil
 }
 
@@ -72,15 +93,29 @@ func (c HttpClient) Retrieve(id, aesKey []byte) ([]byte, error) {
 	parameters.Add("key", hex.EncodeToString(aesKey))
 	Url.RawQuery = parameters.Encode()
 
-	httpRequest, _ := http.NewRequest("GET", Url.String(), nil)
+	httpRequest, err := http.NewRequest("GET", Url.String(), nil)
+	if err != nil {
+		panic("Unable to create HTTP GET request for retrieve")
+	}
+
 	client := &http.Client{}
-	response, _ := client.Do(httpRequest)
+	response, err := client.Do(httpRequest)
+	if err != nil {
+		return nil, err
+	}
 
 	decoder := json.NewDecoder(response.Body)
 
 	var parsedResponse server.RetrieveResponse
-	_ = decoder.Decode(&parsedResponse)
+	err = decoder.Decode(&parsedResponse)
+	if err != nil {
+		return nil, err
+	}
 
-	decodedData, _ := hex.DecodeString(parsedResponse.Data)
+	decodedData, err := hex.DecodeString(parsedResponse.Data)
+	if err != nil {
+		return nil, err
+	}
+
 	return decodedData, nil
 }
