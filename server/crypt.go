@@ -13,13 +13,19 @@ type Aes struct {
 	block cipher.Block
 }
 
-func NewAes(key string, iv []byte) *Aes {
+func NewAes(key string, iv []byte) (*Aes, error) {
 	constructed := &Aes{
 		key: key,
 		iv:  iv,
 	}
-	constructed.block, _ = aes.NewCipher([]byte(constructed.key))
-	return constructed
+
+	aesCipher, err := aes.NewCipher([]byte(constructed.key))
+	if err != nil {
+		return nil, err
+	}
+
+	constructed.block = aesCipher
+	return constructed, nil
 }
 
 func (current *Aes) Encrypt(data []byte) []byte {

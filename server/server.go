@@ -36,13 +36,13 @@ type RetrieveResponse struct {
 
 func (repo Repository) store(request StoreRequest) *StoreResponse {
 
-	key := "A cool key"
+	key := "AES256Key-32Characters1234567890"
 
 	id := request.Id
 	data := request.Data
 
 	iv := GenerateIV()
-	aesCrypt := NewAes(key, iv)
+	aesCrypt, _ := NewAes(key, iv)
 
 	encrypted := aesCrypt.Encrypt([]byte(data))
 	repo.encrypted[id] = encrypted
@@ -138,6 +138,12 @@ func getOnly(h handler) handler {
 var repository *Repository
 
 func Start() {
+
+	repository = &Repository{
+		encrypted: map[uint64][]byte{},
+		iv:        map[uint64][]byte{},
+	}
+
 	http.HandleFunc("/store", postOnly(storeHandler))
 	http.HandleFunc("/retrieve", getOnly(retrieveHandler))
 	http.ListenAndServe(":8080", nil)
