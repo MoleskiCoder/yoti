@@ -2,7 +2,6 @@ package client
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/url"
 	"strconv"
 
@@ -37,7 +36,7 @@ func (c HttpClient) createUrl(resource string) url.URL {
 	return Url
 }
 
-func (c HttpClient) Store(id, payload []byte) (aesKey []byte, err error) {
+func (c HttpClient) Store(id, payload []byte) ([]byte, error) {
 
 	Url := c.createUrl("/store")
 	Id, _ := strconv.ParseUint(string(id), 10, 64)
@@ -57,12 +56,12 @@ func (c HttpClient) Store(id, payload []byte) (aesKey []byte, err error) {
 	decoder := json.NewDecoder(response.Body)
 
 	var parsedResponse server.StoreResponse
-	err = decoder.Decode(&parsedResponse)
+	_ = decoder.Decode(&parsedResponse)
 
 	return []byte(parsedResponse.Key), nil
 }
 
-func (c HttpClient) Retrieve(id, aesKey []byte) (payload []byte, err error) {
+func (c HttpClient) Retrieve(id, aesKey []byte) ([]byte, error) {
 
 	Url := c.createUrl("/retrieve")
 	parameters := url.Values{}
@@ -70,13 +69,14 @@ func (c HttpClient) Retrieve(id, aesKey []byte) (payload []byte, err error) {
 	parameters.Add("key", string(aesKey))
 	Url.RawQuery = parameters.Encode()
 
-	fmt.Printf("** Encoded URL is %q\n", Url.String())
+	httpRequest, _ := http.NewRequest("GET", Url.String(), nil)
+	client := &http.Client{}
+	response, _ := client.Do(httpRequest)
 
-	var result []byte
-	payload = result
+	decoder := json.NewDecoder(response.Body)
 
-	var problem error
-	err = problem
+	var parsedResponse server.RetrieveResponse
+	_ = decoder.Decode(&parsedResponse)
 
-	return
+	return []byte(parsedResponse.Data), nil
 }
