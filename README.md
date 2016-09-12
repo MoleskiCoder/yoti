@@ -73,3 +73,9 @@ git repository.
 Your solution should also be easy to run/verify. To that end please feel free to
 provide any further instructions, documentation, etc on how to go about the
 verification process.
+
+### Adrian Conlon implementation
+
+Run server using: `go run server.go`
+
+Run client test using `go run client.go`
