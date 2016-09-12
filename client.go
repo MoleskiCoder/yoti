@@ -34,14 +34,40 @@ func Retrieve(connection client.HttpClient, id uint64, key []byte) string {
 
 func main() {
 
-	var connection = client.New("http", "localhost", 8080)
+	connection := client.New("http", "localhost", 8080)
 
-	var id uint64 = 1
-	original := "The quick brown fox jumps over the lazy dog"
+	keys := map[uint64][]byte{}
 
-	key := Store(connection, id, []byte(original))
-	fmt.Printf("Stored key: %s\n", hex.EncodeToString(key))
+	{
+		{
+			var id uint64 = 1
+			original := "The quick brown fox jumps over the lazy dog"
 
-	retrieved := Retrieve(connection, id, key)
-	fmt.Printf("Retrieved text: %s\n", retrieved)
+			key := Store(connection, id, []byte(original))
+			keys[id] = key
+			fmt.Printf("Id: %d, Stored key: %s\n", id, hex.EncodeToString(key))
+		}
+
+		{
+			var id uint64 = 2
+			original := "Pack my box with five dozen liquor jugs"
+
+			key := Store(connection, id, []byte(original))
+			keys[id] = key
+			fmt.Printf("Id: %d, Stored key: %s\n", id, hex.EncodeToString(key))
+		}
+	}
+
+	{
+		{
+			var id uint64 = 1
+			retrieved := Retrieve(connection, id, keys[id])
+			fmt.Printf("Id: %d, Retrieved text: %s\n", id, retrieved)
+		}
+		{
+			var id uint64 = 2
+			retrieved := Retrieve(connection, id, keys[id])
+			fmt.Printf("Id: %d, Retrieved text: %s\n", id, retrieved)
+		}
+	}
 }
