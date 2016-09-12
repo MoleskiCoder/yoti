@@ -59,7 +59,10 @@ func (current *Aes) Decrypt(packaged []byte) []byte {
 func GenerateKey() ([]byte, error) {
 	// 32 bytes == 256 bits, i.e. AES256
 	key := make([]byte, 32)
-	_, err := readRandom(key)
+	bytesRead, err := readRandom(key)
+	if bytesRead != 32 {
+		panic("Not enough bytes read from random")
+	}
 	return key, err
 }
 
@@ -67,6 +70,8 @@ func readRandom(destination []byte) (int, error) {
 	return io.ReadFull(rand.Reader, destination)
 }
 
+// Padding is compatible with:
+// https://tools.ietf.org/html/rfc5246#section-6.2.3.2
 func (current *Aes) pad(data []byte) []byte {
 
 	dataLength := len(data)

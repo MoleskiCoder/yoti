@@ -41,8 +41,15 @@ func (repo Repository) store(request StoreRequest) *StoreResponse {
 	id := request.Id
 	data := []byte(request.Data)
 
-	key, _ := GenerateKey()
-	aesCrypt, _ := NewAes(key)
+	key, err := GenerateKey()
+	if err != nil {
+		panic("Unable to generate AES256 key")
+	}
+
+	aesCrypt, err := NewAes(key)
+	if err != nil {
+		panic("Unable to create AES cypher")
+	}
 
 	encrypted := aesCrypt.Encrypt(data)
 
@@ -63,7 +70,11 @@ func (repo Repository) retrieve(key []byte, id uint64) *RetrieveResponse {
 	encrypted := repo.encrypted[id]
 	repo.RUnlock()
 
-	aesCrypt, _ := NewAes(key)
+	aesCrypt, err := NewAes(key)
+	if err != nil {
+		panic("Unable to create AES cypher")
+	}
+
 	decrypted := aesCrypt.Decrypt(encrypted)
 
 	response := &RetrieveResponse{
@@ -80,7 +91,10 @@ func storeHandler(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 
 	var parsed StoreRequest
-	_ = decoder.Decode(&parsed)
+	err := decoder.Decode(&parsed)
+	if err != nil {
+		panic("Unable to decode store request")
+	}
 
 	payload := repository.store(parsed)
 
